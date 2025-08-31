@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Noundry.Hydro Demo</title>
+    
+    <!-- Noundry.Hydro Configuration -->
+    <meta name="hydro-config" />
+    
+    <!-- Styles -->
+    <link rel="stylesheet" href="~/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/noundry-hydro.css" asp-append-version="true" />
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'noundry-primary': '#6366F1',
+                        'noundry-secondary': '#8B5CF6',
+                        'noundry-success': '#10B981',
+                        'noundry-warning': '#F59E0B',
+                        'noundry-error': '#EF4444',
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <!-- Custom Styles -->
+    <style>
+        .noundry-sidebar {
+            width: 256px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        
+        .noundry-main-content {
+            margin-left: 256px;
+            min-height: 100vh;
+            background-color: #f8fafc;
+        }
+        
+        @media (max-width: 768px) {
+            .noundry-sidebar {
+                transform: translateX(-100%);
+                transition: transform 0.3s ease-in-out;
+            }
+            
+            .noundry-sidebar.active {
+                transform: translateX(0);
+            }
+            
+            .noundry-main-content {
+                margin-left: 0;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+    <!-- Mobile menu button -->
+    <div class="md:hidden fixed top-4 left-4 z-50">
+        <button type="button" 
+                class="bg-white p-2 rounded-md shadow-lg text-gray-600 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                onclick="toggleSidebar()">
+            <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+            </svg>
+        </button>
+    </div>
+
+    <!-- Sidebar Navigation -->
+    <div class="noundry-sidebar fixed top-0 left-0 h-full text-white z-40" id="sidebar">
+        <div class="flex flex-col h-full">
+            <!-- Logo/Brand -->
+            <div class="flex items-center px-6 py-4 border-b border-white border-opacity-20">
+                <div class="flex items-center">
+                    <div class="w-8 h-8 bg-white rounded-lg flex items-center justify-center">
+                        <span class="text-indigo-600 font-bold text-lg">N</span>
+                    </div>
+                    <div class="ml-3">
+                        <h1 class="text-xl font-bold">Noundry.Hydro</h1>
+                        <p class="text-xs text-white text-opacity-70">Demo Application</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Navigation Menu -->
+            <nav class="flex-1 px-4 py-6 space-y-2">
+                <a href="/" class="nav-link flex items-center px-3 py-2 text-sm font-medium rounded-md hover:bg-white hover:bg-opacity-10 transition-colors">
+                    <span class="mr-3">🏠</span>
+                    Dashboard
+                </a>
+                
+                <div asp-authz="CustomerAccess">
+                    <a href="/Customers" class="nav-link flex items-center px-3 py-2 text-sm font-medium rounded-md hover:bg-white hover:bg-opacity-10 transition-colors">
+                        <span class="mr-3">👥</span>
+                        Customers
+                    </a>
+                    
+                    <a href="/Products" class="nav-link flex items-center px-3 py-2 text-sm font-medium rounded-md hover:bg-white hover:bg-opacity-10 transition-colors">
+                        <span class="mr-3">📦</span>
+                        Products
+                    </a>
+                    
+                    <a href="/Orders" class="nav-link flex items-center px-3 py-2 text-sm font-medium rounded-md hover:bg-white hover:bg-opacity-10 transition-colors">
+                        <span class="mr-3">🛒</span>
+                        Orders
+                    </a>
+                    
+                    <a href="/Invoices" class="nav-link flex items-center px-3 py-2 text-sm font-medium rounded-md hover:bg-white hover:bg-opacity-10 transition-colors">
+                        <span class="mr-3">📄</span>
+                        Invoices
+                    </a>
+                </div>
+
+                <div class="pt-4 mt-4 border-t border-white border-opacity-20">
+                    <div asp-authz="ManagerOrAdmin">
+                        <a href="/Analytics" class="nav-link flex items-center px-3 py-2 text-sm font-medium rounded-md hover:bg-white hover:bg-opacity-10 transition-colors">
+                            <span class="mr-3">📊</span>
+                            Analytics
+                        </a>
+                        
+                        <a href="/Reports" class="nav-link flex items-center px-3 py-2 text-sm font-medium rounded-md hover:bg-white hover:bg-opacity-10 transition-colors">
+                            <span class="mr-3">📈</span>
+                            Reports
+                        </a>
+                    </div>
+
+                    <div asp-authz="AdminOnly">
+                        <a href="/Admin" class="nav-link flex items-center px-3 py-2 text-sm font-medium rounded-md hover:bg-white hover:bg-opacity-10 transition-colors">
+                            <span class="mr-3">⚙️</span>
+                            Admin Panel
+                        </a>
+                    </div>
+                </div>
+            </nav>
+
+            <!-- User Profile Section -->
+            <div class="px-4 py-4 border-t border-white border-opacity-20">
+                @if (User.Identity?.IsAuthenticated == true)
+                {
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0">
+                            <div class="h-8 w-8 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
+                                <span class="text-white text-sm font-medium">
+                                    @User.Identity.Name?.Split('@')[0]?.Substring(0, 1).ToUpperInvariant()
+                                </span>
+                            </div>
+                        </div>
+                        <div class="ml-3 flex-1">
+                            <p class="text-sm font-medium text-white">@User.Identity.Name?.Split('@')[0]</p>
+                            <div class="flex items-center text-xs text-white text-opacity-70">
+                                <span>@User.Identity.Name</span>
+                            </div>
+                        </div>
+                        <div class="ml-2">
+                            <form asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="@Url.Page("/", new { area = "" })" method="post">
+                                <button type="submit" class="text-white hover:text-gray-200 text-sm" title="Logout">
+                                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+                                    </svg>
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    <div class="space-y-2">
+                        <a href="/Identity/Account/Login" class="block w-full text-center px-3 py-2 text-sm font-medium text-white bg-white bg-opacity-20 rounded-md hover:bg-opacity-30">
+                            Sign In
+                        </a>
+                        <a href="/Identity/Account/Register" class="block w-full text-center px-3 py-2 text-sm font-medium text-indigo-600 bg-white rounded-md hover:bg-gray-50">
+                            Sign Up
+                        </a>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="noundry-main-content">
+        <main class="p-6">
+            @RenderBody()
+        </main>
+    </div>
+
+    <!-- Toast Container -->
+    <div id="toast-container" class="fixed top-4 right-4 z-50 space-y-2"></div>
+
+    <!-- Scripts -->
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Noundry.Hydro Scripts -->
+    <script defer src="~/hydro/hydro.js" asp-append-version="true"></script>
+    <script defer src="~/hydro/alpine.js" asp-append-version="true"></script>
+    
+    <!-- Custom Scripts -->
+    <script>
+        // Sidebar toggle for mobile
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            sidebar.classList.toggle('active');
+        }
+
+        // Close sidebar when clicking outside on mobile
+        document.addEventListener('click', function(e) {
+            const sidebar = document.getElementById('sidebar');
+            const toggle = document.querySelector('[onclick="toggleSidebar()"]');
+            
+            if (window.innerWidth <= 768 && 
+                !sidebar.contains(e.target) && 
+                !toggle.contains(e.target) && 
+                sidebar.classList.contains('active')) {
+                sidebar.classList.remove('active');
+            }
+        });
+
+        // Toast notification system
+        window.noundryToast = {
+            show: function(options) {
+                const container = document.getElementById('toast-container');
+                const toast = document.createElement('div');
+                
+                const colors = {
+                    success: 'bg-green-500',
+                    error: 'bg-red-500',
+                    warning: 'bg-yellow-500',
+                    info: 'bg-blue-500'
+                };
+                
+                toast.className = `${colors[options.type] || colors.info} text-white px-6 py-3 rounded-lg shadow-lg flex items-center justify-between max-w-sm transition-all duration-300 transform translate-x-full`;
+                toast.innerHTML = `
+                    <span>${options.message}</span>
+                    <button onclick="this.parentElement.remove()" class="ml-4 text-white hover:text-gray-200">
+                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                `;
+                
+                container.appendChild(toast);
+                
+                // Trigger animation
+                setTimeout(() => {
+                    toast.classList.remove('translate-x-full');
+                    toast.classList.add('translate-x-0');
+                }, 100);
+                
+                // Auto remove
+                setTimeout(() => {
+                    toast.classList.add('translate-x-full');
+                    setTimeout(() => toast.remove(), 300);
+                }, options.duration || 3000);
+            }
+        };
+
+        // Active navigation highlighting
+        document.addEventListener('DOMContentLoaded', function() {
+            const currentPath = window.location.pathname;
+            const navLinks = document.querySelectorAll('.nav-link');
+            
+            navLinks.forEach(link => {
+                const href = link.getAttribute('href');
+                if (currentPath === href || (href !== '/' && currentPath.startsWith(href))) {
+                    link.classList.add('bg-white', 'bg-opacity-20', 'text-white');
+                }
+            });
+        });
+    </script>
+
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

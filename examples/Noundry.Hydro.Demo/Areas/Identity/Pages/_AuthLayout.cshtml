@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Noundry.Hydro Demo</title>
+    
+    <!-- Noundry.Hydro Configuration -->
+    <meta name="hydro-config" />
+    
+    <!-- Styles -->
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/noundry-hydro.css" asp-append-version="true" />
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'noundry-primary': '#6366F1',
+                        'noundry-secondary': '#8B5CF6',
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-gray-50">
+    @RenderBody()
+
+    <!-- Toast Container -->
+    <div id="toast-container" class="fixed top-4 right-4 z-50 space-y-2"></div>
+
+    <!-- Scripts -->
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    
+    <!-- Noundry.Hydro Scripts -->
+    <script defer src="~/hydro/hydro.js" asp-append-version="true"></script>
+    <script defer src="~/hydro/alpine.js" asp-append-version="true"></script>
+    
+    <!-- Toast System -->
+    <script>
+        window.noundryToast = {
+            show: function(options) {
+                const container = document.getElementById('toast-container');
+                const toast = document.createElement('div');
+                
+                const colors = {
+                    success: 'bg-green-500',
+                    error: 'bg-red-500',
+                    warning: 'bg-yellow-500',
+                    info: 'bg-blue-500'
+                };
+                
+                toast.className = `${colors[options.type] || colors.info} text-white px-6 py-3 rounded-lg shadow-lg flex items-center justify-between max-w-sm transition-all duration-300 transform translate-x-full`;
+                toast.innerHTML = `
+                    <span>${options.message}</span>
+                    <button onclick="this.parentElement.remove()" class="ml-4 text-white hover:text-gray-200">
+                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                `;
+                
+                container.appendChild(toast);
+                
+                setTimeout(() => {
+                    toast.classList.remove('translate-x-full');
+                    toast.classList.add('translate-x-0');
+                }, 100);
+                
+                setTimeout(() => {
+                    toast.classList.add('translate-x-full');
+                    setTimeout(() => toast.remove(), 300);
+                }, options.duration || 3000);
+            }
+        };
+    </script>
+
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

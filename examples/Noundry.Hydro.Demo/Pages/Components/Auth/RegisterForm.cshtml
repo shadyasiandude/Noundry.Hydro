@@ -1,0 +1,174 @@
+@model RegisterForm
+
+<div class="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-md w-full space-y-8">
+        <div class="text-center">
+            <h2 class="mt-6 text-3xl font-extrabold text-gray-900">
+                Create your account
+            </h2>
+            <p class="mt-2 text-sm text-gray-600">
+                Join the Noundry.Hydro Demo
+            </p>
+        </div>
+
+        <form class="mt-8 space-y-6" on:submit="@(() => Model.Register())">
+            @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+            {
+                <noundry-alert type="error" dismissible="true" title="Registration Failed">
+                    @Model.ErrorMessage
+                </noundry-alert>
+            }
+
+            @if (!string.IsNullOrEmpty(Model.SuccessMessage))
+            {
+                <noundry-alert type="success" dismissible="false" title="Success!">
+                    @Model.SuccessMessage
+                </noundry-alert>
+            }
+
+            <div class="space-y-4">
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label for="FirstName" class="block text-sm font-medium text-gray-700">
+                            First Name <span class="text-red-500">*</span>
+                        </label>
+                        <input id="FirstName" 
+                               name="@nameof(Model.FirstName)" 
+                               type="text" 
+                               autocomplete="given-name" 
+                               required 
+                               bind="@Model.FirstName"
+                               class="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                               placeholder="John" />
+                        <span asp-validation-for="FirstName" class="text-red-500 text-xs mt-1"></span>
+                    </div>
+
+                    <div>
+                        <label for="LastName" class="block text-sm font-medium text-gray-700">
+                            Last Name <span class="text-red-500">*</span>
+                        </label>
+                        <input id="LastName" 
+                               name="@nameof(Model.LastName)" 
+                               type="text" 
+                               autocomplete="family-name" 
+                               required 
+                               bind="@Model.LastName"
+                               class="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                               placeholder="Doe" />
+                        <span asp-validation-for="LastName" class="text-red-500 text-xs mt-1"></span>
+                    </div>
+                </div>
+
+                <div>
+                    <label for="Email" class="block text-sm font-medium text-gray-700">
+                        Email Address <span class="text-red-500">*</span>
+                    </label>
+                    <input id="Email" 
+                           name="@nameof(Model.Email)" 
+                           type="email" 
+                           autocomplete="email" 
+                           required 
+                           bind="@Model.Email"
+                           x-hydro-bind:input.debounce.1000ms
+                           on:input="@(() => Model.CheckEmailAvailability())"
+                           class="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                           placeholder="john.doe@example.com" />
+                    <span asp-validation-for="Email" class="text-red-500 text-xs mt-1"></span>
+                </div>
+
+                <div>
+                    <label for="Password" class="block text-sm font-medium text-gray-700">
+                        Password <span class="text-red-500">*</span>
+                    </label>
+                    <input id="Password" 
+                           name="@nameof(Model.Password)" 
+                           type="password" 
+                           autocomplete="new-password" 
+                           required 
+                           bind="@Model.Password"
+                           on:input="@(() => Model.ValidatePasswordStrength())"
+                           class="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                           placeholder="Create a strong password" />
+                    <span asp-validation-for="Password" class="text-red-500 text-xs mt-1"></span>
+                    <p class="text-xs text-gray-500 mt-1">Password must be at least 6 characters long</p>
+                </div>
+
+                <div>
+                    <label for="ConfirmPassword" class="block text-sm font-medium text-gray-700">
+                        Confirm Password <span class="text-red-500">*</span>
+                    </label>
+                    <input id="ConfirmPassword" 
+                           name="@nameof(Model.ConfirmPassword)" 
+                           type="password" 
+                           autocomplete="new-password" 
+                           required 
+                           bind="@Model.ConfirmPassword"
+                           class="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                           placeholder="Confirm your password" />
+                    <span asp-validation-for="ConfirmPassword" class="text-red-500 text-xs mt-1"></span>
+                </div>
+
+                <div class="flex items-start">
+                    <div class="flex items-center h-5">
+                        <input id="AgreeToTerms" 
+                               name="@nameof(Model.AgreeToTerms)" 
+                               type="checkbox" 
+                               required
+                               bind="@Model.AgreeToTerms"
+                               class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded" />
+                    </div>
+                    <div class="ml-3 text-sm">
+                        <label for="AgreeToTerms" class="text-gray-700">
+                            I agree to the 
+                            <a href="/terms" target="_blank" class="text-indigo-600 hover:text-indigo-500 font-medium">
+                                Terms and Conditions
+                            </a> 
+                            and 
+                            <a href="/privacy" target="_blank" class="text-indigo-600 hover:text-indigo-500 font-medium">
+                                Privacy Policy
+                            </a>
+                            <span class="text-red-500">*</span>
+                        </label>
+                        <span asp-validation-for="AgreeToTerms" class="text-red-500 text-xs block mt-1"></span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="space-y-4">
+                <button type="submit" 
+                        class="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                        disabled="@Model.IsLoading">
+                    @if (Model.IsLoading)
+                    {
+                        <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="m12 2a10 10 0 0 1 10 10h-2a8 8 0 0 0-8-8v-2z"></path>
+                        </svg>
+                        <span>Creating account...</span>
+                    }
+                    else
+                    {
+                        <span>Create Account</span>
+                    }
+                </button>
+
+                <div class="text-center">
+                    <button type="button" 
+                            on:click="@(() => Model.ClearForm())"
+                            class="text-sm text-indigo-600 hover:text-indigo-500">
+                        Clear Form
+                    </button>
+                </div>
+            </div>
+
+            <div class="text-center">
+                <p class="text-sm text-gray-600">
+                    Already have an account?
+                    <a href="/Identity/Account/Login" class="font-medium text-indigo-600 hover:text-indigo-500">
+                        Sign in here
+                    </a>
+                </p>
+            </div>
+        </form>
+    </div>
+</div>

@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>net6.0;net8.0;net9.0</TargetFrameworks>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <PackageId>Noundry.Hydro.Extensions</PackageId>
+    <Title>Noundry.Hydro.Extensions - Additional Utilities and Helpers</Title>
+    <Authors>Noundry Team</Authors>
+    <Description>Extension methods, utilities, and helper classes for Noundry.Hydro ecosystem.</Description>
+    <PackageProjectUrl>https://github.com/plsft/Noundry.Hydro</PackageProjectUrl>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <RepositoryUrl>https://github.com/plsft/Noundry.Hydro.git</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageTags>aspnetcore;hydro;extensions;utilities;noundry</PackageTags>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <RootNamespace>Noundry.Hydro.Extensions</RootNamespace>
+    <Version>1.0.0-preview1</Version>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Noundry.Hydro\Noundry.Hydro.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\..\README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+
+</Project>

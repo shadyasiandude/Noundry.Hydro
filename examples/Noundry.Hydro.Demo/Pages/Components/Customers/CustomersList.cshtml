@@ -1,0 +1,318 @@
+@model CustomersList
+
+<div class="space-y-6">
+    <!-- Header and Actions -->
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-900">Customers</h1>
+            <p class="mt-1 text-lg text-gray-600">
+                Manage your customer database (@Model.TotalCount total customers)
+            </p>
+        </div>
+        
+        <div class="mt-4 md:mt-0 flex items-center space-x-3">
+            <button on:click="@(() => Model.ExportCustomers())" 
+                    class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+                <svg class="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                </svg>
+                Export
+            </button>
+            
+            <button on:click="@(() => Model.ToggleCreateForm())" 
+                    class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700">
+                <svg class="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                </svg>
+                Add Customer
+            </button>
+        </div>
+    </div>
+
+    <!-- Search and Filters -->
+    <div class="bg-white shadow rounded-lg p-6">
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between space-y-4 md:space-y-0">
+            <div class="flex-1 max-w-lg">
+                <div class="relative">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                        </svg>
+                    </div>
+                    <input type="text" 
+                           name="@nameof(Model.SearchTerm)"
+                           bind="@Model.SearchTerm"
+                           on:keyup.enter="@(() => Model.Search())"
+                           x-hydro-bind:input.debounce.500ms
+                           class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500"
+                           placeholder="Search customers by name, email, or phone..." />
+                </div>
+            </div>
+            
+            <div class="flex items-center space-x-2">
+                <button on:click="@(() => Model.Search())" 
+                        class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700"
+                        disabled="@Model.IsLoading">
+                    @if (Model.IsLoading)
+                    {
+                        @Model.LoadingSpinner("sm")
+                    }
+                    else
+                    {
+                        <svg class="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                        </svg>
+                    }
+                    Search
+                </button>
+                
+                <button on:click="@(() => Model.ClearSearch())" 
+                        class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+                    Clear
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create Customer Form (Collapsible) -->
+    <div asp-if="@Model.ShowCreateForm" class="bg-white shadow rounded-lg p-6">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-lg font-medium text-gray-900">Add New Customer</h3>
+            <button on:click="@(() => Model.ToggleCreateForm())" 
+                    class="text-gray-400 hover:text-gray-600">
+                <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
+        </div>
+        
+        <customer-form />
+    </div>
+
+    <!-- Customers Table -->
+    <div class="bg-white shadow rounded-lg overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <div class="flex items-center justify-between">
+                <h3 class="text-lg font-medium text-gray-900">Customer List</h3>
+                <div class="flex items-center space-x-2 text-sm text-gray-500">
+                    <span>Page @Model.CurrentPage of @Model.TotalPages</span>
+                    <span>|</span>
+                    <span>@Model.TotalCount total customers</span>
+                </div>
+            </div>
+        </div>
+
+        @if (Model.IsLoading)
+        {
+            <div class="p-12 text-center">
+                @Model.LoadingSpinner("lg")
+                <p class="mt-4 text-gray-500">Loading customers...</p>
+            </div>
+        }
+        else if (!Model.Customers.Any())
+        {
+            <div class="p-12 text-center">
+                <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                </svg>
+                <h4 class="mt-4 text-lg font-medium text-gray-900">No customers found</h4>
+                <p class="text-gray-500">
+                    @if (!string.IsNullOrWhiteSpace(Model.SearchTerm))
+                    {
+                        <span>No customers match your search criteria. Try adjusting your search terms.</span>
+                    }
+                    else
+                    {
+                        <span>Get started by adding your first customer.</span>
+                    }
+                </p>
+                <div class="mt-4">
+                    <button on:click="@(() => Model.ToggleCreateForm())" 
+                            class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700">
+                        Add Customer
+                    </button>
+                </div>
+            </div>
+        }
+        else
+        {
+            <!-- Table Header -->
+            <div class="bg-gray-50 px-6 py-3 border-b border-gray-200">
+                <div class="grid grid-cols-12 gap-4 text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <div class="col-span-3">Customer</div>
+                    <div class="col-span-3">Contact</div>
+                    <div class="col-span-2">Location</div>
+                    <div class="col-span-2">Stats</div>
+                    <div class="col-span-1">Status</div>
+                    <div class="col-span-1">Actions</div>
+                </div>
+            </div>
+
+            <!-- Table Body -->
+            <div class="divide-y divide-gray-200">
+                @foreach (var customer in Model.Customers)
+                {
+                    <div class="px-6 py-4 hover:bg-gray-50 transition-colors">
+                        <div class="grid grid-cols-12 gap-4 items-center">
+                            <!-- Customer Info -->
+                            <div class="col-span-3">
+                                <div class="flex items-center">
+                                    <div class="flex-shrink-0 h-10 w-10">
+                                        <div class="h-10 w-10 rounded-full bg-indigo-500 flex items-center justify-center">
+                                            <span class="text-white font-medium text-sm">
+                                                @customer.FirstName.Substring(0, 1)@customer.LastName.Substring(0, 1)
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div class="ml-4">
+                                        <div class="text-sm font-medium text-gray-900 cursor-pointer hover:text-indigo-600"
+                                             on:click="@(() => Model.ViewCustomer(customer.Id))">
+                                            @customer.FullName
+                                        </div>
+                                        <div class="text-sm text-gray-500">
+                                            Customer since @customer.DateJoined.ToString("MMM yyyy")
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Contact Info -->
+                            <div class="col-span-3">
+                                <div class="text-sm text-gray-900">@customer.Email</div>
+                                <div class="text-sm text-gray-500">@customer.Phone</div>
+                            </div>
+
+                            <!-- Location -->
+                            <div class="col-span-2">
+                                <div class="text-sm text-gray-900">@customer.City</div>
+                                <div class="text-sm text-gray-500">@customer.Country</div>
+                            </div>
+
+                            <!-- Stats -->
+                            <div class="col-span-2">
+                                <div class="text-sm text-gray-900">@customer.TotalOrders orders</div>
+                                <div class="text-sm text-gray-500">@customer.TotalSpent.ToString("C") spent</div>
+                            </div>
+
+                            <!-- Status -->
+                            <div class="col-span-1">
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium @(customer.IsActive ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800")">
+                                    @(customer.IsActive ? "Active" : "Inactive")
+                                </span>
+                            </div>
+
+                            <!-- Actions -->
+                            <div class="col-span-1">
+                                <div class="flex items-center space-x-2">
+                                    <button on:click="@(() => Model.ViewCustomer(customer.Id))" 
+                                            class="text-indigo-600 hover:text-indigo-900 text-sm"
+                                            title="View Customer">
+                                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                                        </svg>
+                                    </button>
+                                    
+                                    <button on:click="@(() => Model.EditCustomer(customer.Id))" 
+                                            class="text-yellow-600 hover:text-yellow-900 text-sm"
+                                            title="Edit Customer">
+                                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                                        </svg>
+                                    </button>
+                                    
+                                    <button on:click="@(() => Model.DeleteCustomer(customer.Id))" 
+                                            class="text-red-600 hover:text-red-900 text-sm"
+                                            title="Delete Customer">
+                                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+
+            <!-- Pagination -->
+            @if (Model.TotalPages > 1)
+            {
+                <div class="bg-white px-6 py-3 border-t border-gray-200">
+                    <div class="flex items-center justify-between">
+                        <div class="flex-1 flex justify-between sm:hidden">
+                            <button on:click="@(() => Model.PreviousPage())" 
+                                    class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+                                    disabled="@(Model.CurrentPage <= 1)">
+                                Previous
+                            </button>
+                            <button on:click="@(() => Model.NextPage())" 
+                                    class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+                                    disabled="@(Model.CurrentPage >= Model.TotalPages)">
+                                Next
+                            </button>
+                        </div>
+                        
+                        <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+                            <div>
+                                <p class="text-sm text-gray-700">
+                                    Showing <span class="font-medium">@((Model.CurrentPage - 1) * Model.PageSize + 1)</span>
+                                    to <span class="font-medium">@Math.Min(Model.CurrentPage * Model.PageSize, Model.TotalCount)</span>
+                                    of <span class="font-medium">@Model.TotalCount</span> results
+                                </p>
+                            </div>
+                            
+                            <div>
+                                <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
+                                    <button on:click="@(() => Model.PreviousPage())" 
+                                            class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
+                                            disabled="@(Model.CurrentPage <= 1)">
+                                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                                        </svg>
+                                    </button>
+                                    
+                                    @for (int i = Math.Max(1, Model.CurrentPage - 2); i <= Math.Min(Model.TotalPages, Model.CurrentPage + 2); i++)
+                                    {
+                                        var pageNum = i;
+                                        <button on:click="@(() => Model.GoToPage(pageNum))" 
+                                                class="relative inline-flex items-center px-4 py-2 border text-sm font-medium @(pageNum == Model.CurrentPage ? "z-10 bg-indigo-50 border-indigo-500 text-indigo-600" : "bg-white border-gray-300 text-gray-500 hover:bg-gray-50")">
+                                            @pageNum
+                                        </button>
+                                    }
+                                    
+                                    <button on:click="@(() => Model.NextPage())" 
+                                            class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
+                                            disabled="@(Model.CurrentPage >= Model.TotalPages)">
+                                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                                        </svg>
+                                    </button>
+                                </nav>
+                            </div>
+                        </div>
+                    </div>
+                }
+            }
+        }
+    </div>
+
+    <!-- Bulk Actions (for future enhancement) -->
+    <div class="bg-white shadow rounded-lg p-6">
+        <h3 class="text-lg font-medium text-gray-900 mb-4">Bulk Actions</h3>
+        <div class="flex items-center space-x-4">
+            <select class="block w-48 pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
+                <option value="">Select action...</option>
+                <option value="export">Export Selected</option>
+                <option value="activate">Activate Selected</option>
+                <option value="deactivate">Deactivate Selected</option>
+                <option value="delete">Delete Selected</option>
+            </select>
+            
+            <button on:click="@(() => Model.BulkAction("execute"))" 
+                    class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+                Execute
+            </button>
+        </div>
+    </div>
+</div>

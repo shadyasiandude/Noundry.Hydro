@@ -1,0 +1,200 @@
+@model StatsCards
+
+<div class="mb-6">
+    <div class="flex justify-between items-center mb-4">
+        <h2 class="text-2xl font-bold text-gray-900">Dashboard Overview</h2>
+        <div class="flex items-center space-x-2">
+            <span class="text-sm text-gray-500">
+                Last updated: @Model.LastRefresh.ToString("HH:mm:ss")
+            </span>
+            <button on:click="@(() => Model.RefreshStats())" 
+                    class="inline-flex items-center px-3 py-1 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                    disabled="@Model.IsLoading">
+                @if (Model.IsLoading)
+                {
+                    <svg class="animate-spin -ml-1 mr-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="m12 2a10 10 0 0 1 10 10h-2a8 8 0 0 0-8-8v-2z"></path>
+                    </svg>
+                }
+                else
+                {
+                    <svg class="h-4 w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                    </svg>
+                }
+                Refresh
+            </button>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <!-- Total Revenue Card -->
+        <div class="bg-white overflow-hidden shadow rounded-lg cursor-pointer hover:shadow-lg transition-shadow"
+             on:click="@(() => Model.ViewDetails("revenue"))">
+            <div class="p-5">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <div class="w-8 h-8 bg-green-500 rounded-md flex items-center justify-center">
+                            <span class="text-white text-lg">💰</span>
+                        </div>
+                    </div>
+                    <div class="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt class="text-sm font-medium text-gray-500 truncate">
+                                Total Revenue
+                            </dt>
+                            <dd class="text-lg font-medium text-gray-900">
+                                @Model.Stats.TotalRevenue.ToString("C")
+                            </dd>
+                            <dd class="text-sm text-green-600">
+                                This month: @Model.Stats.MonthlyRevenue.ToString("C")
+                            </dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Total Customers Card -->
+        <div class="bg-white overflow-hidden shadow rounded-lg cursor-pointer hover:shadow-lg transition-shadow"
+             on:click="@(() => Model.ViewDetails("customers"))">
+            <div class="p-5">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <div class="w-8 h-8 bg-blue-500 rounded-md flex items-center justify-center">
+                            <span class="text-white text-lg">👥</span>
+                        </div>
+                    </div>
+                    <div class="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt class="text-sm font-medium text-gray-500 truncate">
+                                Total Customers
+                            </dt>
+                            <dd class="text-lg font-medium text-gray-900">
+                                @Model.Stats.TotalCustomers.ToString("N0")
+                            </dd>
+                            <dd class="text-sm text-blue-600">
+                                +@Model.Stats.NewCustomersThisMonth new this month
+                            </dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Total Orders Card -->
+        <div class="bg-white overflow-hidden shadow rounded-lg cursor-pointer hover:shadow-lg transition-shadow"
+             on:click="@(() => Model.ViewDetails("orders"))">
+            <div class="p-5">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <div class="w-8 h-8 bg-purple-500 rounded-md flex items-center justify-center">
+                            <span class="text-white text-lg">📦</span>
+                        </div>
+                    </div>
+                    <div class="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt class="text-sm font-medium text-gray-500 truncate">
+                                Total Orders
+                            </dt>
+                            <dd class="text-lg font-medium text-gray-900">
+                                @Model.Stats.TotalOrders.ToString("N0")
+                            </dd>
+                            <dd class="text-sm text-purple-600">
+                                @Model.Stats.PendingOrders pending
+                            </dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Products & Inventory Card -->
+        <div class="bg-white overflow-hidden shadow rounded-lg cursor-pointer hover:shadow-lg transition-shadow"
+             on:click="@(() => Model.ViewDetails("products"))">
+            <div class="p-5">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <div class="w-8 h-8 bg-orange-500 rounded-md flex items-center justify-center">
+                            <span class="text-white text-lg">📋</span>
+                        </div>
+                    </div>
+                    <div class="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt class="text-sm font-medium text-gray-500 truncate">
+                                Products
+                            </dt>
+                            <dd class="text-lg font-medium text-gray-900">
+                                @Model.Stats.TotalProducts.ToString("N0")
+                            </dd>
+                            <dd class="text-sm @(Model.Stats.LowStockProducts > 0 ? "text-red-600" : "text-green-600")">
+                                @if (Model.Stats.LowStockProducts > 0)
+                                {
+                                    <span>⚠️ @Model.Stats.LowStockProducts low stock</span>
+                                }
+                                else
+                                {
+                                    <span>✅ All products in stock</span>
+                                }
+                            </dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Additional Stats Row -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
+        <!-- Processing Orders -->
+        <div class="bg-white overflow-hidden shadow rounded-lg">
+            <div class="px-4 py-5 sm:p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-500">Processing Orders</p>
+                        <p class="text-2xl font-semibold text-blue-600">@Model.Stats.ProcessingOrders</p>
+                    </div>
+                    <div class="text-3xl">⚙️</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Shipped Orders -->
+        <div class="bg-white overflow-hidden shadow rounded-lg">
+            <div class="px-4 py-5 sm:p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-500">Shipped Orders</p>
+                        <p class="text-2xl font-semibold text-purple-600">@Model.Stats.ShippedOrders</p>
+                    </div>
+                    <div class="text-3xl">🚚</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Overdue Invoices -->
+        <div class="bg-white overflow-hidden shadow rounded-lg">
+            <div class="px-4 py-5 sm:p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-500">Overdue Invoices</p>
+                        <p class="text-2xl font-semibold @(Model.Stats.OverdueInvoices > 0 ? "text-red-600" : "text-green-600")">
+                            @Model.Stats.OverdueInvoices
+                        </p>
+                    </div>
+                    <div class="text-3xl">
+                        @if (Model.Stats.OverdueInvoices > 0)
+                        {
+                            <span>⚠️</span>
+                        }
+                        else
+                        {
+                            <span>✅</span>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

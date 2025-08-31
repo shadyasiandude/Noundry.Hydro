@@ -1,0 +1,231 @@
+@model CustomerForm
+
+<div class="space-y-6">
+    <form on:submit="@(() => Model.SaveCustomer())">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- Personal Information -->
+            <div class="space-y-4">
+                <h4 class="text-lg font-medium text-gray-900">Personal Information</h4>
+                
+                <div>
+                    <label for="FirstName" class="block text-sm font-medium text-gray-700">
+                        First Name <span class="text-red-500">*</span>
+                    </label>
+                    <input id="FirstName" 
+                           name="@nameof(Model.FirstName)" 
+                           type="text" 
+                           required 
+                           bind="@Model.FirstName"
+                           class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                           placeholder="Enter first name" />
+                    <span asp-validation-for="FirstName" class="text-red-500 text-xs mt-1"></span>
+                </div>
+
+                <div>
+                    <label for="LastName" class="block text-sm font-medium text-gray-700">
+                        Last Name <span class="text-red-500">*</span>
+                    </label>
+                    <input id="LastName" 
+                           name="@nameof(Model.LastName)" 
+                           type="text" 
+                           required 
+                           bind="@Model.LastName"
+                           class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                           placeholder="Enter last name" />
+                    <span asp-validation-for="LastName" class="text-red-500 text-xs mt-1"></span>
+                </div>
+
+                <div>
+                    <label for="Email" class="block text-sm font-medium text-gray-700">
+                        Email Address <span class="text-red-500">*</span>
+                    </label>
+                    <input id="Email" 
+                           name="@nameof(Model.Email)" 
+                           type="email" 
+                           required 
+                           bind="@Model.Email"
+                           on:blur="@(() => Model.CheckEmailAvailability())"
+                           class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                           placeholder="customer@example.com" />
+                    <span asp-validation-for="Email" class="text-red-500 text-xs mt-1"></span>
+                </div>
+
+                <div>
+                    <label for="Phone" class="block text-sm font-medium text-gray-700">
+                        Phone Number
+                    </label>
+                    <input id="Phone" 
+                           name="@nameof(Model.Phone)" 
+                           type="tel" 
+                           bind="@Model.Phone"
+                           class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                           placeholder="+1-555-0123" />
+                    <span asp-validation-for="Phone" class="text-red-500 text-xs mt-1"></span>
+                </div>
+            </div>
+
+            <!-- Address Information -->
+            <div class="space-y-4">
+                <h4 class="text-lg font-medium text-gray-900">Address Information</h4>
+                
+                <div>
+                    <label for="Address" class="block text-sm font-medium text-gray-700">
+                        Street Address
+                    </label>
+                    <input id="Address" 
+                           name="@nameof(Model.Address)" 
+                           type="text" 
+                           bind="@Model.Address"
+                           class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                           placeholder="123 Main Street" />
+                    <span asp-validation-for="Address" class="text-red-500 text-xs mt-1"></span>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label for="City" class="block text-sm font-medium text-gray-700">
+                            City
+                        </label>
+                        <input id="City" 
+                               name="@nameof(Model.City)" 
+                               type="text" 
+                               bind="@Model.City"
+                               class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                               placeholder="New York" />
+                        <span asp-validation-for="City" class="text-red-500 text-xs mt-1"></span>
+                    </div>
+
+                    <div>
+                        <label for="PostalCode" class="block text-sm font-medium text-gray-700">
+                            Postal Code
+                        </label>
+                        <input id="PostalCode" 
+                               name="@nameof(Model.PostalCode)" 
+                               type="text" 
+                               bind="@Model.PostalCode"
+                               class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                               placeholder="10001" />
+                        <span asp-validation-for="PostalCode" class="text-red-500 text-xs mt-1"></span>
+                    </div>
+                </div>
+
+                <div>
+                    <label for="Country" class="block text-sm font-medium text-gray-700">
+                        Country
+                    </label>
+                    <select id="Country" 
+                            name="@nameof(Model.Country)" 
+                            bind="@Model.Country"
+                            class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                        <option value="USA">United States</option>
+                        <option value="Canada">Canada</option>
+                        <option value="UK">United Kingdom</option>
+                        <option value="Germany">Germany</option>
+                        <option value="France">France</option>
+                        <option value="Australia">Australia</option>
+                        <option value="Other">Other</option>
+                    </select>
+                    <span asp-validation-for="Country" class="text-red-500 text-xs mt-1"></span>
+                </div>
+
+                <div>
+                    <label for="Notes" class="block text-sm font-medium text-gray-700">
+                        Notes
+                    </label>
+                    <textarea id="Notes" 
+                              name="@nameof(Model.Notes)" 
+                              rows="3" 
+                              bind="@Model.Notes"
+                              class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                              placeholder="Additional notes about this customer..."></textarea>
+                    <span asp-validation-for="Notes" class="text-red-500 text-xs mt-1"></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Customer Status -->
+        <div class="mt-6 border-t border-gray-200 pt-6">
+            <h4 class="text-lg font-medium text-gray-900 mb-4">Customer Status</h4>
+            <div class="flex items-center">
+                <input id="IsActive" 
+                       name="@nameof(Model.IsActive)" 
+                       type="checkbox" 
+                       bind="@Model.IsActive"
+                       class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded" />
+                <label for="IsActive" class="ml-2 block text-sm text-gray-700">
+                    Active Customer (can place orders and access services)
+                </label>
+            </div>
+        </div>
+
+        <!-- Form Actions -->
+        <div class="mt-8 border-t border-gray-200 pt-6">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <button type="submit" 
+                            class="inline-flex items-center px-6 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
+                            disabled="@Model.IsLoading">
+                        @if (Model.IsLoading)
+                        {
+                            @Model.LoadingSpinner("sm")
+                            <span class="ml-2">@(Model.IsEditMode ? "Updating..." : "Creating...")</span>
+                        }
+                        else
+                        {
+                            <svg class="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                            <span>@(Model.IsEditMode ? "Update Customer" : "Create Customer")</span>
+                        }
+                    </button>
+
+                    <button type="button" 
+                            on:click="@(() => Model.ClearForm())" 
+                            class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+                        <svg class="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                        Clear Form
+                    </button>
+                </div>
+
+                <div class="flex items-center space-x-3">
+                    <button type="button" 
+                            on:click="@(() => Model.FillSampleData())" 
+                            class="inline-flex items-center px-4 py-2 border border-indigo-300 rounded-md shadow-sm text-sm font-medium text-indigo-600 bg-white hover:bg-indigo-50">
+                        <svg class="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                        </svg>
+                        Fill Sample Data
+                    </button>
+
+                    <div asp-if="@Model.IsEditMode" class="text-sm text-gray-500">
+                        <p>Customer ID: @Model.CustomerId</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+
+    <!-- Real-time Validation Summary -->
+    <div asp-if="@(!Model.IsValid)" class="mt-6 bg-red-50 border border-red-200 rounded-md p-4">
+        <div class="flex">
+            <div class="flex-shrink-0">
+                <svg class="h-5 w-5 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                </svg>
+            </div>
+            <div class="ml-3">
+                <h4 class="text-sm font-medium text-red-800">Please correct the following errors:</h4>
+                <div class="mt-2 text-sm text-red-700">
+                    <ul class="list-disc pl-5 space-y-1">
+                        @foreach (var error in Model.ModelState.Values.SelectMany(v => v.Errors))
+                        {
+                            <li>@error.ErrorMessage</li>
+                        }
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,433 @@
+/* Noundry.Hydro CSS Framework Integration */
+
+/* Hydro Loading States */
+.hydro-loading {
+    position: relative;
+}
+
+.hydro-loading::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.hydro-request {
+    opacity: 0.7;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+}
+
+/* Noundry UI Component Styles */
+[data-noundry-component] {
+    display: block;
+}
+
+/* Enhanced form controls */
+.noundry-form-group {
+    margin-bottom: 1.5rem;
+}
+
+.noundry-form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+    color: #374151;
+}
+
+.noundry-form-group input,
+.noundry-form-group select,
+.noundry-form-group textarea {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid #d1d5db;
+    border-radius: 0.375rem;
+    background-color: #ffffff;
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+.noundry-form-group input:focus,
+.noundry-form-group select:focus,
+.noundry-form-group textarea:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.noundry-form-group.has-error input,
+.noundry-form-group.has-error select,
+.noundry-form-group.has-error textarea {
+    border-color: #ef4444;
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+}
+
+.noundry-form-group .error-message {
+    color: #ef4444;
+    font-size: 0.75rem;
+    margin-top: 0.25rem;
+}
+
+/* Button enhancements */
+.noundry-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    line-height: 1.25rem;
+    border-radius: 0.375rem;
+    border: none;
+    cursor: pointer;
+    transition: all 0.15s ease-in-out;
+    text-decoration: none;
+}
+
+.noundry-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.noundry-btn-primary {
+    background-color: #3b82f6;
+    color: #ffffff;
+}
+
+.noundry-btn-primary:hover:not(:disabled) {
+    background-color: #2563eb;
+}
+
+.noundry-btn-secondary {
+    background-color: #6b7280;
+    color: #ffffff;
+}
+
+.noundry-btn-secondary:hover:not(:disabled) {
+    background-color: #4b5563;
+}
+
+.noundry-btn-success {
+    background-color: #10b981;
+    color: #ffffff;
+}
+
+.noundry-btn-success:hover:not(:disabled) {
+    background-color: #059669;
+}
+
+.noundry-btn-danger {
+    background-color: #ef4444;
+    color: #ffffff;
+}
+
+.noundry-btn-danger:hover:not(:disabled) {
+    background-color: #dc2626;
+}
+
+/* Alert components */
+.noundry-alert {
+    display: flex;
+    align-items: center;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    border: 1px solid;
+    border-radius: 0.375rem;
+}
+
+.noundry-alert-info {
+    background-color: #eff6ff;
+    border-color: #bfdbfe;
+    color: #1e40af;
+}
+
+.noundry-alert-success {
+    background-color: #ecfdf5;
+    border-color: #a7f3d0;
+    color: #065f46;
+}
+
+.noundry-alert-warning {
+    background-color: #fffbeb;
+    border-color: #fde68a;
+    color: #92400e;
+}
+
+.noundry-alert-error {
+    background-color: #fef2f2;
+    border-color: #fecaca;
+    color: #991b1b;
+}
+
+.noundry-alert-dismiss {
+    margin-left: auto;
+    background: none;
+    border: none;
+    font-size: 1.25rem;
+    cursor: pointer;
+    padding: 0;
+    line-height: 1;
+    opacity: 0.7;
+}
+
+.noundry-alert-dismiss:hover {
+    opacity: 1;
+}
+
+/* Loading spinner */
+.noundry-spinner {
+    display: inline-block;
+    width: 1.5rem;
+    height: 1.5rem;
+    border: 2px solid #e5e7eb;
+    border-top: 2px solid #3b82f6;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.noundry-spinner-sm {
+    width: 1rem;
+    height: 1rem;
+    border-width: 1px;
+}
+
+.noundry-spinner-lg {
+    width: 2rem;
+    height: 2rem;
+    border-width: 3px;
+}
+
+/* Card components */
+.noundry-card {
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 0.5rem;
+    padding: 1.5rem;
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+}
+
+.noundry-card-header {
+    margin-bottom: 1rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.noundry-card-title {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: #111827;
+    margin: 0;
+}
+
+.noundry-card-body {
+    color: #374151;
+}
+
+/* Modal components */
+.noundry-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.5);
+}
+
+.noundry-modal-content {
+    background: #ffffff;
+    border-radius: 0.5rem;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    max-width: 28rem;
+    width: 90%;
+    max-height: 90vh;
+    overflow: auto;
+}
+
+.noundry-modal-header {
+    padding: 1.5rem 1.5rem 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.noundry-modal-title {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: #111827;
+    margin: 0;
+}
+
+.noundry-modal-close {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    padding: 0;
+    color: #6b7280;
+}
+
+.noundry-modal-close:hover {
+    color: #374151;
+}
+
+.noundry-modal-body {
+    padding: 1.5rem;
+}
+
+/* Navigation components */
+.noundry-nav {
+    display: flex;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.noundry-nav-item {
+    margin-right: 1rem;
+}
+
+.noundry-nav-link {
+    display: block;
+    padding: 0.5rem 1rem;
+    color: #6b7280;
+    text-decoration: none;
+    border-radius: 0.375rem;
+    transition: all 0.15s ease-in-out;
+}
+
+.noundry-nav-link:hover {
+    background-color: #f3f4f6;
+    color: #111827;
+}
+
+.noundry-nav-link.active {
+    background-color: #3b82f6;
+    color: #ffffff;
+}
+
+/* Table components */
+.noundry-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 0.5rem;
+    overflow: hidden;
+}
+
+.noundry-table th,
+.noundry-table td {
+    padding: 0.75rem;
+    text-align: left;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.noundry-table th {
+    background-color: #f9fafb;
+    font-weight: 600;
+    color: #374151;
+}
+
+.noundry-table tbody tr:hover {
+    background-color: #f9fafb;
+}
+
+/* Responsive utilities */
+@media (max-width: 640px) {
+    .noundry-card {
+        padding: 1rem;
+    }
+    
+    .noundry-modal-content {
+        margin: 1rem;
+        width: calc(100% - 2rem);
+    }
+    
+    .noundry-table {
+        font-size: 0.875rem;
+    }
+    
+    .noundry-table th,
+    .noundry-table td {
+        padding: 0.5rem;
+    }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+    .noundry-card {
+        background: #1f2937;
+        border-color: #374151;
+        color: #f9fafb;
+    }
+    
+    .noundry-card-title {
+        color: #f9fafb;
+    }
+    
+    .noundry-form-group label {
+        color: #f9fafb;
+    }
+    
+    .noundry-form-group input,
+    .noundry-form-group select,
+    .noundry-form-group textarea {
+        background-color: #374151;
+        border-color: #4b5563;
+        color: #f9fafb;
+    }
+    
+    .noundry-modal-content {
+        background: #1f2937;
+        color: #f9fafb;
+    }
+    
+    .noundry-table {
+        background: #1f2937;
+        border-color: #374151;
+    }
+    
+    .noundry-table th {
+        background-color: #374151;
+        color: #f9fafb;
+    }
+}
+
+/* Animation utilities */
+.fade-in {
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+.slide-up {
+    animation: slideUp 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes slideUp {
+    from { 
+        opacity: 0;
+        transform: translateY(1rem);
+    }
+    to { 
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
