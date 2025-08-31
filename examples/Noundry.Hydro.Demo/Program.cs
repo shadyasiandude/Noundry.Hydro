@@ -1,34 +1,38 @@
 using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
 using Noundry.Hydro.Configuration;
 using Noundry.Hydro.Demo.Data;
 using Noundry.Hydro.Demo.Models;
 using Noundry.Hydro.Demo.Services;
+using Tuxedo;
+using Bowtie;
+using Guardian;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Configure Entity Framework with In-Memory database for demo
-builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseInMemoryDatabase("NoundryHydroDemo"));
-
-// Configure Tuxedo ORM for high-performance data access
+// Configure Tuxedo ORM as the primary data access layer (replaces Entity Framework)
 builder.Services.AddTuxedo(options =>
 {
-    options.ConnectionString = "Data Source=:memory:"; // In-memory for demo
+    options.ConnectionString = "Data Source=noundry_hydro_demo.db"; // SQLite for demo
     options.DatabaseProvider = DatabaseProvider.SQLite;
     options.EnableRetryPolicies = true;
     options.EnableDiagnostics = builder.Environment.IsDevelopment();
+    options.CommandTimeout = TimeSpan.FromSeconds(30);
 });
 
-// Configure Bowtie migration system
+// Configure Bowtie migration system for database schema management
 builder.Services.AddBowtie(options =>
 {
-    options.MigrationsAssembly = typeof(ApplicationDbContext).Assembly;
+    options.MigrationsAssembly = typeof(TuxedoDataContext).Assembly;
     options.AutoMigrate = builder.Environment.IsDevelopment();
+    options.CreateDatabaseIfNotExists = true;
 });
 
-// Configure Identity
-builder.Services.AddDefaultIdentity<ApplicationUser>(options =>
+// Register Tuxedo data context
+builder.Services.AddScoped<TuxedoDataContext>();
+builder.Services.AddScoped<ITuxedoContext>(provider => provider.GetRequiredService<TuxedoDataContext>());
+
+// Configure Identity with Tuxedo-based stores (not Entity Framework)
+builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
 {
     // Password settings for demo (relaxed for easier testing)
     options.Password.RequireDigit = false;
@@ -52,8 +56,8 @@ builder.Services.AddDefaultIdentity<ApplicationUser>(options =>
     options.SignIn.RequireConfirmedEmail = false;
     options.SignIn.RequireConfirmedPhoneNumber = false;
 })
-.AddRoles<IdentityRole>()
-.AddEntityFrameworkStores<ApplicationDbContext>();
+.AddTuxedoStores<TuxedoDataContext>() // Use Tuxedo stores instead of EF
+.AddDefaultTokenProviders();
 
 // Configure authorization policies
 builder.Services.AddAuthorization(options =>
@@ -143,36 +147,36 @@ app.UseNoundryHydro(app.Environment);
 // Configure endpoints
 app.MapRazorPages();
 
-// Initialize database with sample data
-await InitializeDatabase(app);
+// Initialize database with Tuxedo and sample data
+await InitializeTuxedoDatabase(app);
 
 app.Run();
 
-static async Task InitializeDatabase(WebApplication app)
+static async Task InitializeTuxedoDatabase(WebApplication app)
 {
     using var scope = app.Services.CreateScope();
     var services = scope.ServiceProvider;
 
     try
     {
-        var context = services.GetRequiredService<ApplicationDbContext>();
+        var tuxedoContext = services.GetRequiredService<TuxedoDataContext>();
         var userManager = services.GetRequiredService<UserManager<ApplicationUser>>();
         var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
         var dataService = services.GetRequiredService<IDemoDataService>();
 
-        // Ensure database is created
-        await context.Database.EnsureCreatedAsync();
+        // Initialize database schema using Tuxedo/Bowtie
+        await tuxedoContext.InitializeDatabaseAsync();
 
         // Initialize roles and users
         await SeedRolesAndUsers(userManager, roleManager);
 
-        // Generate sample data
+        // Generate sample data using Tuxedo
         await dataService.GenerateSampleDataAsync();
     }
     catch (Exception ex)
     {
         var logger = services.GetRequiredService<ILogger<Program>>();
-        logger.LogError(ex, "An error occurred while seeding the database.");
+        logger.LogError(ex, "An error occurred while initializing Tuxedo database.");
     }
 }
 

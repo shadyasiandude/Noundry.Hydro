@@ -1,5 +1,5 @@
 using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
+using Tuxedo.Attributes;
 
 namespace Noundry.Hydro.Demo.Models;
 
@@ -20,12 +20,10 @@ public class Product
     [Display(Name = "SKU")]
     public string Sku { get; set; } = "";
 
-    [Column(TypeName = "decimal(18,2)")]
     [Display(Name = "Unit Price")]
     [Range(0.01, double.MaxValue, ErrorMessage = "Price must be greater than 0")]
     public decimal Price { get; set; }
 
-    [Column(TypeName = "decimal(18,2)")]
     [Display(Name = "Cost Price")]
     [Range(0, double.MaxValue)]
     public decimal CostPrice { get; set; }
@@ -51,35 +49,29 @@ public class Product
     [Display(Name = "Is Featured")]
     public bool IsFeatured { get; set; } = false;
 
-    [Column(TypeName = "datetime2")]
     [Display(Name = "Created Date")]
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
-    [Column(TypeName = "datetime2")]
     [Display(Name = "Updated Date")]
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 
-    // Navigation properties
-    public virtual ICollection<OrderItem> OrderItems { get; set; } = new List<OrderItem>();
-    public virtual ICollection<InvoiceItem> InvoiceItems { get; set; } = new List<InvoiceItem>();
-
-    // Computed properties
-    [NotMapped]
+    // Computed properties (populated by Tuxedo queries when needed)
+    [Computed]
     [Display(Name = "Profit Margin")]
     public decimal ProfitMargin => Price > 0 ? ((Price - CostPrice) / Price) * 100 : 0;
 
-    [NotMapped]
+    [Computed]
     [Display(Name = "Is Low Stock")]
     public bool IsLowStock => StockQuantity <= MinimumStock;
 
-    [NotMapped]
+    [Computed]
     [Display(Name = "Stock Status")]
     public string StockStatus => StockQuantity <= 0 ? "Out of Stock" : 
         IsLowStock ? "Low Stock" : "In Stock";
 
-    [NotMapped]
+    [Computed]
     [Display(Name = "Total Sold")]
-    public int TotalSold => OrderItems?.Sum(oi => oi.Quantity) ?? 0;
+    public int TotalSold { get; set; }
 }
 
 public enum ProductCategory

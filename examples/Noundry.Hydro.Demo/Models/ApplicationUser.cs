@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Identity;
 using System.ComponentModel.DataAnnotations;
+using Tuxedo.Attributes;
 
 namespace Noundry.Hydro.Demo.Models;
 

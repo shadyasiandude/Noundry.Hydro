@@ -1,7 +1,8 @@
 using Bogus;
-using Microsoft.EntityFrameworkCore;
 using Noundry.Hydro.Demo.Data;
 using Noundry.Hydro.Demo.Models;
+using Tuxedo;
+using Guardian;
 
 namespace Noundry.Hydro.Demo.Services;
 
@@ -13,12 +14,12 @@ public interface IDemoDataService
 
 public class DemoDataService : IDemoDataService
 {
-    private readonly ApplicationDbContext _context;
+    private readonly TuxedoDataContext _tuxedoContext;
     private readonly ILogger<DemoDataService> _logger;
 
-    public DemoDataService(ApplicationDbContext context, ILogger<DemoDataService> logger)
+    public DemoDataService(TuxedoDataContext tuxedoContext, ILogger<DemoDataService> logger)
     {
-        _context = context;
+        _tuxedoContext = tuxedoContext;
         _logger = logger;
     }
 
@@ -26,14 +27,15 @@ public class DemoDataService : IDemoDataService
     {
         try
         {
-            // Check if data already exists
-            if (await _context.Orders.AnyAsync())
+            // Check if data already exists using Tuxedo
+            var existingOrders = await _tuxedoContext.QueryFirstOrDefaultAsync<int>("SELECT COUNT(*) FROM Orders");
+            if (existingOrders > 0)
             {
                 _logger.LogInformation("Sample data already exists, skipping generation.");
                 return;
             }
 
-            _logger.LogInformation("Generating sample data...");
+            _logger.LogInformation("Generating sample data with Tuxedo ORM...");
 
             // Generate additional customers using Bogus
             var customerFaker = new Faker<Customer>()
@@ -310,52 +312,8 @@ public class DemoDataService : IDemoDataService
 
     public async Task<DashboardStats> GetDashboardStatsAsync()
     {
-        var totalCustomers = await _context.Customers.CountAsync(c => c.IsActive);
-        var totalProducts = await _context.Products.CountAsync(p => p.IsActive);
-        var totalOrders = await _context.Orders.CountAsync();
-        var totalInvoices = await _context.Invoices.CountAsync();
-
-        var totalRevenue = await _context.Orders
-            .Where(o => o.Status == OrderStatus.Completed)
-            .SumAsync(o => o.TotalAmount);
-
-        var pendingOrders = await _context.Orders.CountAsync(o => o.Status == OrderStatus.Pending);
-        var processingOrders = await _context.Orders.CountAsync(o => o.Status == OrderStatus.Processing);
-        var shippedOrders = await _context.Orders.CountAsync(o => o.Status == OrderStatus.Shipped);
-
-        var overdueInvoices = await _context.Invoices
-            .CountAsync(i => i.Status == InvoiceStatus.Sent && i.DueDate < DateTime.UtcNow);
-
-        var paidInvoices = await _context.Invoices.CountAsync(i => i.Status == InvoiceStatus.Paid);
-
-        var lowStockProducts = await _context.Products
-            .CountAsync(p => p.IsActive && p.StockQuantity <= p.MinimumStock);
-
-        var monthlyRevenue = await _context.Orders
-            .Where(o => o.Status == OrderStatus.Completed && 
-                       o.OrderDate >= DateTime.UtcNow.AddDays(-30))
-            .SumAsync(o => o.TotalAmount);
-
-        var newCustomersThisMonth = await _context.Customers
-            .CountAsync(c => c.DateJoined >= DateTime.UtcNow.AddDays(-30));
-
-        return new DashboardStats
-        {
-            TotalCustomers = totalCustomers,
-            TotalProducts = totalProducts,
-            TotalOrders = totalOrders,
-            TotalInvoices = totalInvoices,
-            TotalRevenue = totalRevenue,
-            PendingOrders = pendingOrders,
-            ProcessingOrders = processingOrders,
-            ShippedOrders = shippedOrders,
-            OverdueInvoices = overdueInvoices,
-            PaidInvoices = paidInvoices,
-            LowStockProducts = lowStockProducts,
-            MonthlyRevenue = monthlyRevenue,
-            NewCustomersThisMonth = newCustomersThisMonth,
-            LastUpdated = DateTime.UtcNow
-        };
+        // Use pure Tuxedo ORM for high-performance dashboard queries
+        return await _tuxedoContext.GetDashboardStatsAsync();
     }
 }
 

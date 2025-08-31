@@ -1,4 +1,3 @@
-using Microsoft.EntityFrameworkCore;
 using Noundry.Hydro.Demo.Data;
 using Noundry.Hydro.Demo.Models;
 using Tuxedo;
@@ -20,18 +19,15 @@ public interface ICustomerService
 
 public class CustomerService : ICustomerService
 {
-    private readonly ApplicationDbContext _context;
-    private readonly ITuxedoContext _tuxedoContext;
+    private readonly TuxedoDataContext _tuxedoContext;
     private readonly IGuardian _guard;
     private readonly ILogger<CustomerService> _logger;
 
     public CustomerService(
-        ApplicationDbContext context, 
-        ITuxedoContext tuxedoContext,
+        TuxedoDataContext tuxedoContext,
         IGuardian guard,
         ILogger<CustomerService> logger)
     {
-        _context = context;
         _tuxedoContext = tuxedoContext;
         _guard = guard;
         _logger = logger;
@@ -39,56 +35,24 @@ public class CustomerService : ICustomerService
 
     public async Task<List<Customer>> GetCustomersAsync(string? searchTerm = null, int page = 1, int pageSize = 10)
     {
-        var query = _context.Customers.AsQueryable();
-
-        if (!string.IsNullOrWhiteSpace(searchTerm))
-        {
-            query = query.Where(c => 
-                c.FirstName.Contains(searchTerm) ||
-                c.LastName.Contains(searchTerm) ||
-                c.Email.Contains(searchTerm) ||
-                (c.Phone != null && c.Phone.Contains(searchTerm)));
-        }
-
-        return await query
-            .Include(c => c.Orders)
-            .OrderByDescending(c => c.DateJoined)
-            .Skip((page - 1) * pageSize)
-            .Take(pageSize)
-            .ToListAsync();
+        // Use pure Tuxedo ORM instead of Entity Framework
+        return await _tuxedoContext.GetCustomersAsync(searchTerm, page, pageSize);
     }
 
     public async Task<Customer?> GetCustomerByIdAsync(int id)
     {
-        return await _context.Customers
-            .Include(c => c.Orders)
-            .ThenInclude(o => o.OrderItems)
-            .ThenInclude(oi => oi.Product)
-            .Include(c => c.Invoices)
-            .FirstOrDefaultAsync(c => c.Id == id);
+        // Use Tuxedo ORM for high-performance query
+        return await _tuxedoContext.GetCustomerByIdAsync(id);
     }
 
     public async Task<Customer> CreateCustomerAsync(Customer customer)
     {
         try
         {
-            // Use Guardian for input validation
-            _guard.Against.Null(customer, nameof(customer));
-            _guard.Against.NullOrWhiteSpace(customer.FirstName, nameof(customer.FirstName));
-            _guard.Against.NullOrWhiteSpace(customer.LastName, nameof(customer.LastName));
-            _guard.Against.InvalidFormat(customer.Email, @"^[^@\s]+@[^@\s]+\.[^@\s]+$", 
-                nameof(customer.Email), "Invalid email format");
-
+            // Use pure Tuxedo ORM for creation
             customer.DateJoined = DateTime.UtcNow;
-
-            // Use both EF Core and Tuxedo for demonstration
-            _context.Customers.Add(customer);
-            await _context.SaveChangesAsync();
-
-            // Example Tuxedo usage for additional operations
-            await _tuxedoContext.ExecuteAsync(
-                "INSERT INTO CustomerAuditLog (CustomerId, Action, Timestamp) VALUES (@Id, @Action, @Timestamp)",
-                new { Id = customer.Id, Action = "Created", Timestamp = DateTime.UtcNow });
+            var customerId = await _tuxedoContext.CreateCustomerAsync(customer);
+            customer.Id = customerId;
 
             _logger.LogInformation("Created new customer: {CustomerName} ({Email})", 
                 customer.FullName, customer.Email);
@@ -106,8 +70,8 @@ public class CustomerService : ICustomerService
     {
         try
         {
-            _context.Entry(customer).State = EntityState.Modified;
-            await _context.SaveChangesAsync();
+            // Use pure Tuxedo ORM for updates
+            await _tuxedoContext.UpdateCustomerAsync(customer);
 
             _logger.LogInformation("Updated customer: {CustomerName} ({Id})", 
                 customer.FullName, customer.Id);
@@ -125,32 +89,16 @@ public class CustomerService : ICustomerService
     {
         try
         {
-            var customer = await _context.Customers.FindAsync(id);
-            if (customer == null)
-                return false;
-
-            // Check if customer has orders or invoices
-            var hasOrders = await _context.Orders.AnyAsync(o => o.CustomerId == id);
-            var hasInvoices = await _context.Invoices.AnyAsync(i => i.CustomerId == id);
-
-            if (hasOrders || hasInvoices)
+            // Use pure Tuxedo ORM for deletion
+            var result = await _tuxedoContext.DeleteCustomerAsync(id);
+            
+            if (result > 0)
             {
-                // Soft delete by deactivating
-                customer.IsActive = false;
-                await _context.SaveChangesAsync();
-                
-                _logger.LogInformation("Deactivated customer with existing data: {CustomerId}", id);
+                _logger.LogInformation("Customer deleted/deactivated: {CustomerId}", id);
+                return true;
             }
-            else
-            {
-                // Hard delete if no related data
-                _context.Customers.Remove(customer);
-                await _context.SaveChangesAsync();
-                
-                _logger.LogInformation("Deleted customer: {CustomerId}", id);
-            }
-
-            return true;
+            
+            return false;
         }
         catch (Exception ex)
         {
@@ -161,69 +109,60 @@ public class CustomerService : ICustomerService
 
     public async Task<int> GetCustomerCountAsync(string? searchTerm = null)
     {
-        var query = _context.Customers.AsQueryable();
+        var sql = @"
+            SELECT COUNT(*) FROM Customers 
+            WHERE (@SearchTerm IS NULL OR 
+                   FirstName LIKE '%' + @SearchTerm + '%' OR 
+                   LastName LIKE '%' + @SearchTerm + '%' OR 
+                   Email LIKE '%' + @SearchTerm + '%' OR
+                   Phone LIKE '%' + @SearchTerm + '%')";
 
-        if (!string.IsNullOrWhiteSpace(searchTerm))
-        {
-            query = query.Where(c => 
-                c.FirstName.Contains(searchTerm) ||
-                c.LastName.Contains(searchTerm) ||
-                c.Email.Contains(searchTerm) ||
-                (c.Phone != null && c.Phone.Contains(searchTerm)));
-        }
-
-        return await query.CountAsync();
+        return await _tuxedoContext.QueryFirstOrDefaultAsync<int>(sql, new { SearchTerm = searchTerm });
     }
 
     public async Task<List<Customer>> GetRecentCustomersAsync(int count = 5)
     {
-        return await _context.Customers
-            .Where(c => c.IsActive)
-            .OrderByDescending(c => c.DateJoined)
-            .Take(count)
-            .ToListAsync();
+        var sql = @"
+            SELECT TOP(@Count) * FROM Customers 
+            WHERE IsActive = 1 
+            ORDER BY DateJoined DESC";
+
+        return (await _tuxedoContext.QueryAsync<Customer>(sql, new { Count = count })).ToList();
     }
 
     public async Task<CustomerStats> GetCustomerStatsAsync(int customerId)
     {
-        var customer = await _context.Customers.FindAsync(customerId);
+        var customer = await _tuxedoContext.GetCustomerByIdAsync(customerId);
         if (customer == null)
             throw new ArgumentException("Customer not found", nameof(customerId));
 
-        var totalOrders = await _context.Orders.CountAsync(o => o.CustomerId == customerId);
-        var completedOrders = await _context.Orders.CountAsync(o => o.CustomerId == customerId && o.Status == OrderStatus.Completed);
-        var totalSpent = await _context.Orders
-            .Where(o => o.CustomerId == customerId && o.Status == OrderStatus.Completed)
-            .SumAsync(o => o.TotalAmount);
+        var sql = @"
+            SELECT 
+                @CustomerId as CustomerId,
+                (SELECT COUNT(*) FROM Orders WHERE CustomerId = @CustomerId) as TotalOrders,
+                (SELECT COUNT(*) FROM Orders WHERE CustomerId = @CustomerId AND Status = @CompletedStatus) as CompletedOrders,
+                (SELECT ISNULL(SUM(TotalAmount), 0) FROM Orders WHERE CustomerId = @CustomerId AND Status = @CompletedStatus) as TotalSpent,
+                (SELECT MAX(OrderDate) FROM Orders WHERE CustomerId = @CustomerId) as LastOrderDate,
+                (SELECT COUNT(*) FROM Invoices WHERE CustomerId = @CustomerId AND Status IN (@SentStatus, @PartiallyPaidStatus)) as PendingInvoices,
+                (SELECT COUNT(*) FROM Invoices WHERE CustomerId = @CustomerId AND Status = @SentStatus AND DueDate < @Now) as OverdueInvoices";
 
-        var lastOrderDate = await _context.Orders
-            .Where(o => o.CustomerId == customerId)
-            .MaxAsync(o => (DateTime?)o.OrderDate);
-
-        var averageOrderValue = completedOrders > 0 ? totalSpent / completedOrders : 0;
-
-        var pendingInvoices = await _context.Invoices.CountAsync(i => 
-            i.CustomerId == customerId && 
-            (i.Status == InvoiceStatus.Sent || i.Status == InvoiceStatus.PartiallyPaid));
-
-        var overdueInvoices = await _context.Invoices.CountAsync(i => 
-            i.CustomerId == customerId && 
-            i.Status == InvoiceStatus.Sent && 
-            i.DueDate < DateTime.UtcNow);
-
-        return new CustomerStats
+        var stats = await _tuxedoContext.QueryFirstOrDefaultAsync<CustomerStats>(sql, new 
         {
             CustomerId = customerId,
-            TotalOrders = totalOrders,
-            CompletedOrders = completedOrders,
-            TotalSpent = totalSpent,
-            AverageOrderValue = averageOrderValue,
-            LastOrderDate = lastOrderDate,
-            PendingInvoices = pendingInvoices,
-            OverdueInvoices = overdueInvoices,
-            CustomerSince = customer.DateJoined,
-            IsActive = customer.IsActive
-        };
+            CompletedStatus = OrderStatus.Completed,
+            SentStatus = InvoiceStatus.Sent,
+            PartiallyPaidStatus = InvoiceStatus.PartiallyPaid,
+            Now = DateTime.UtcNow
+        });
+
+        if (stats != null)
+        {
+            stats.CustomerSince = customer.DateJoined;
+            stats.IsActive = customer.IsActive;
+            stats.AverageOrderValue = stats.CompletedOrders > 0 ? stats.TotalSpent / stats.CompletedOrders : 0;
+        }
+
+        return stats ?? new CustomerStats { CustomerId = customerId };
     }
 }
 

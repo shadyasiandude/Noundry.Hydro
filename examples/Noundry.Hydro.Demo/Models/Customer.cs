@@ -1,5 +1,5 @@
 using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
+using Tuxedo.Attributes;
 
 namespace Noundry.Hydro.Demo.Models;
 
@@ -38,7 +38,6 @@ public class Customer
     [MaxLength(100)]
     public string? Country { get; set; }
 
-    [Column(TypeName = "datetime2")]
     [Display(Name = "Date Joined")]
     public DateTime DateJoined { get; set; } = DateTime.UtcNow;
 
@@ -48,21 +47,17 @@ public class Customer
     [MaxLength(1000)]
     public string? Notes { get; set; }
 
-    // Navigation properties
-    public virtual ICollection<Order> Orders { get; set; } = new List<Order>();
-    public virtual ICollection<Invoice> Invoices { get; set; } = new List<Invoice>();
-
-    // Computed properties
-    [NotMapped]
+    // Computed properties (no navigation properties needed with Tuxedo)
+    [Computed]
     [Display(Name = "Full Name")]
     public string FullName => $"{FirstName} {LastName}";
 
-    [NotMapped]
+    // These will be populated by Tuxedo queries when needed
+    [Computed]
     [Display(Name = "Total Orders")]
-    public int TotalOrders => Orders?.Count ?? 0;
+    public int TotalOrders { get; set; }
 
-    [NotMapped]
+    [Computed]
     [Display(Name = "Total Spent")]
-    public decimal TotalSpent => Orders?.Where(o => o.Status == OrderStatus.Completed)
-        .Sum(o => o.TotalAmount) ?? 0;
+    public decimal TotalSpent { get; set; }
 }
