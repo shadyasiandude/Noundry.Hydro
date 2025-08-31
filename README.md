@@ -24,20 +24,28 @@
 | Library | Purpose | Key Features |
 |---------|---------|--------------|
 | **[🔥 Hydro](https://usehydro.dev)** | Reactive Components | Stateful components, real-time updates, Alpine.js integration |
-| **[🎯 Noundry.TagHelpers](https://github.com/plsft/Noundry.TagHelpers)** | Enhanced TagHelpers | Authorization, forms, web APIs, accessibility |
-| **[🎨 Noundry.UI](https://github.com/plsft/noundry.ui)** | UI Component Library | 44+ components, Tailwind CSS, responsive design |
-| **[🗄️ Tuxedo ORM](https://github.com/plsft/Tuxedo)** | High-Performance ORM | LINQ expressions, multi-database, migrations |
+| **[🎯 Noundry.TagHelpers](https://github.com/plsft/Noundry.TagHelpers)** | Enhanced TagHelpers | Authorization, forms, web APIs, accessibility, Tailwind CSS |
+| **[🎨 Noundry.UI](https://github.com/plsft/Noundry.UI)** | UI Component Library | 62+ components across 5 categories, Alpine.js integration |
+| **[🗄️ Tuxedo ORM](https://github.com/plsft/Tuxedo)** | High-Performance ORM | Dapper + Contrib, LINQ expressions, multi-database |
+| **[🛡️ Guardian](https://github.com/plsft/Guardian)** | Input Validation | Guard clauses, fail-fast validation, zero allocations |
+| **[✅ Assertive](https://github.com/plsft/Assertive)** | Testing Framework | Fluent assertions, readable tests, zero dependencies |
 
 ## 🚀 **Quick Start**
 
 ### 1. **Installation**
 
 ```bash
-# Install the main package
+# Install the complete ecosystem
 dotnet add package Noundry.Hydro
-
-# Optional: Add extensions
 dotnet add package Noundry.Hydro.Extensions
+
+# Core ecosystem packages (automatically included)
+dotnet add package Noundry.TagHelpers
+dotnet add package Noundry.UI
+dotnet add package Tuxedo
+dotnet add package Bowtie
+dotnet add package Guardian
+dotnet add package Assertive
 ```
 
 ### 2. **Setup (Program.cs)**
@@ -54,6 +62,22 @@ builder.Services.AddNoundryHydro(options =>
     options.EnableNoundryTagHelpers = true;
     options.IncludeTailwindCSS = true;
     options.EnableTuxedoIntegration = true;
+    options.Styling.PrimaryColor = "#6366F1";
+    options.Styling.SupportDarkMode = true;
+});
+
+// Configure Tuxedo ORM
+builder.Services.AddTuxedo(options =>
+{
+    options.ConnectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+    options.DatabaseProvider = DatabaseProvider.SqlServer;
+    options.EnableRetryPolicies = true;
+});
+
+// Configure Bowtie migrations
+builder.Services.AddBowtie(options =>
+{
+    options.AutoMigrate = builder.Environment.IsDevelopment();
 });
 
 var app = builder.Build();
@@ -68,20 +92,38 @@ app.Run();
 
 ```csharp
 using Noundry.Hydro.Components;
+using Guardian;
 
 public class Counter : NoundryHydroComponent
 {
     public int Count { get; set; }
 
-    public void Increment()
+    public async Task Increment()
     {
+        // Use Guardian for input validation
+        Guard.Against.OutOfRange(Count, nameof(Count), 0, 100);
+        
         Count++;
         ShowToast($"Count: {Count}", "success");
+        
+        // Save to database using Tuxedo
+        await ExecuteCommandAsync(
+            "UPDATE Counters SET Value = @Count WHERE Id = @Id",
+            new { Count, Id = ComponentId });
         
         if (Count >= 10)
         {
             DispatchNoundryEvent(new MilestoneReached { Count = Count });
         }
+    }
+
+    public async Task Reset()
+    {
+        Count = 0;
+        await ExecuteCommandAsync(
+            "UPDATE Counters SET Value = 0 WHERE Id = @Id",
+            new { Id = ComponentId });
+        ShowToast("Counter reset!", "info");
     }
 }
 
@@ -91,15 +133,24 @@ public record MilestoneReached(int Count);
 ```razor
 @model Counter
 
-<div class="noundry-card">
-    <div class="text-center">
-        <div class="text-4xl font-bold text-blue-600 mb-4">@Model.Count</div>
-        <button on:click="@(() => Model.Increment())" 
-                class="noundry-btn noundry-btn-primary">
+<!-- Using Noundry.UI components -->
+<noundry-card title="Interactive Counter" class="text-center">
+    <div class="text-4xl font-bold text-blue-600 mb-4">@Model.Count</div>
+    
+    <div class="space-x-2">
+        <noundry-button 
+            variant="primary" 
+            on:click="@(() => Model.Increment())">
             🚀 Increment
-        </button>
+        </noundry-button>
+        
+        <noundry-button 
+            variant="secondary" 
+            on:click="@(() => Model.Reset())">
+            🔄 Reset
+        </noundry-button>
     </div>
-</div>
+</noundry-card>
 ```
 
 ### 4. **Use in Your Pages**
@@ -260,51 +311,67 @@ builder.Services.AddNoundryHydro(options =>
 });
 ```
 
-### **Component Styling**
+### **Real Noundry.UI Components**
 
 ```razor
-<!-- Noundry UI Components with Tailwind CSS -->
-<noundry-alert type="success" dismissible="true">
-    Welcome to Noundry.Hydro!
+<!-- 62+ Available Components -->
+<noundry-alert type="success" dismissible="true" title="Success!">
+    Welcome to Noundry.Hydro ecosystem!
 </noundry-alert>
 
-<noundry-button variant="primary" size="lg" on:click="@(() => Model.DoAction())">
+<noundry-button variant="primary" size="lg" loading="false" on:click="@(() => Model.DoAction())">
     🚀 Launch Action
 </noundry-button>
 
-<noundry-form-group label="Email" field-name="Email" required="true" />
+<noundry-text-input label="Email" name="Email" type="email" required="true" />
+
+<noundry-select label="Country">
+    <noundry-option value="us">United States</noundry-option>
+    <noundry-option value="ca">Canada</noundry-option>
+</noundry-select>
+
+<noundry-modal title="Confirmation" button-text="Open Dialog">
+    <p>Are you sure you want to proceed?</p>
+</noundry-modal>
 ```
 
 ## 🗄️ **Database Integration**
 
-### **Tuxedo ORM Usage**
+### **Real Tuxedo ORM Integration**
 
 ```csharp
 public class CustomerComponent : NoundryHydroComponent
 {
     public async Task<List<Customer>> GetCustomers()
     {
-        // High-performance LINQ queries
-        return await TuxedoContext.Customers
-            .Where(c => c.IsActive)
-            .Include(c => c.Orders)
-            .OrderByDescending(c => c.DateJoined)
-            .ToListAsync();
+        // High-performance Tuxedo queries (Dapper + Contrib)
+        return await ExecuteQueryAsync<Customer>(
+            @"SELECT c.*, COUNT(o.Id) as TotalOrders 
+              FROM Customers c 
+              LEFT JOIN Orders o ON c.Id = o.CustomerId 
+              WHERE c.IsActive = 1 
+              GROUP BY c.Id 
+              ORDER BY c.DateJoined DESC");
     }
 
     public async Task SaveCustomer(Customer customer)
     {
-        // Built-in validation
-        var validation = await ValidateEntityAsync(customer);
-        if (validation.Any())
-        {
-            foreach (var error in validation)
-                ModelState.AddModelError(error.Key, error.Value.First());
-            return;
-        }
+        // Guardian input validation
+        ValidateInput(customer.FirstName, nameof(customer.FirstName));
+        ValidateInput(customer.LastName, nameof(customer.LastName));
+        ValidateEmail(customer.Email, nameof(customer.Email));
+        
+        // Tuxedo high-performance insert/update
+        var result = await ExecuteCommandAsync(
+            @"INSERT INTO Customers (FirstName, LastName, Email, Phone, DateJoined) 
+              VALUES (@FirstName, @LastName, @Email, @Phone, @DateJoined)",
+            customer);
 
-        await ExecuteCommandAsync(new SaveCustomerCommand(customer));
-        ShowToast("Customer saved!", "success");
+        if (result > 0)
+        {
+            ShowToast("Customer saved successfully!", "success");
+            DispatchNoundryEvent(new CustomerCreated { CustomerId = customer.Id });
+        }
     }
 }
 ```

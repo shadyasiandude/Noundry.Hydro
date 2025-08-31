@@ -2,6 +2,8 @@ using Noundry.Hydro.Components;
 using Noundry.Hydro.Demo.Models;
 using Noundry.Hydro.Demo.Services;
 using System.ComponentModel.DataAnnotations;
+using Guardian;
+using Assertive;
 
 namespace Noundry.Hydro.Demo.Pages.Components.Customers;
 
@@ -94,6 +96,24 @@ public class CustomerForm : NoundryHydroComponent
 
     public async Task SaveCustomer()
     {
+        // Use Guardian for comprehensive input validation
+        try
+        {
+            ValidateInput(FirstName, nameof(FirstName));
+            ValidateInput(LastName, nameof(LastName));
+            ValidateEmail(Email, nameof(Email));
+            
+            if (!string.IsNullOrWhiteSpace(Phone))
+            {
+                ValidateInput(Phone, nameof(Phone));
+            }
+        }
+        catch (ArgumentException)
+        {
+            ShowToast("Please correct the validation errors", "error");
+            return;
+        }
+
         if (!Validate())
         {
             ShowToast("Please correct the errors below", "error");

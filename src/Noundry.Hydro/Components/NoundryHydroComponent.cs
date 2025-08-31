@@ -2,6 +2,9 @@ using Hydro;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Noundry.Hydro.Configuration;
+using Guardian;
+using Tuxedo;
+using Assertive;
 
 namespace Noundry.Hydro.Components;
 
@@ -24,6 +27,18 @@ public abstract class NoundryHydroComponent : HydroComponent
     /// </summary>
     protected INoundryComponentContext ComponentContext =>
         _componentContext ??= HttpContext.RequestServices.GetRequiredService<INoundryComponentContext>();
+
+    /// <summary>
+    /// Guardian for secure input validation
+    /// </summary>
+    protected IGuardian Guard =>
+        HttpContext.RequestServices.GetRequiredService<IGuardian>();
+
+    /// <summary>
+    /// Tuxedo database context for data operations
+    /// </summary>
+    protected ITuxedoContext TuxedoContext =>
+        HttpContext.RequestServices.GetRequiredService<ITuxedoContext>();
 
     /// <summary>
     /// Renders a Noundry UI component
@@ -148,6 +163,113 @@ public abstract class NoundryHydroComponent : HydroComponent
                 }});
             }}
         ");
+    }
+
+    /// <summary>
+    /// Validates input using Guardian security checks
+    /// </summary>
+    /// <param name="value">Value to validate</param>
+    /// <param name="parameterName">Parameter name for error context</param>
+    protected void ValidateInput<T>(T value, string parameterName)
+    {
+        try
+        {
+            Guard.Against.Null(value, parameterName);
+            
+            if (value is string stringValue)
+            {
+                Guard.Against.NullOrWhiteSpace(stringValue, parameterName);
+            }
+        }
+        catch (ArgumentException ex)
+        {
+            ModelState.AddModelError(parameterName, ex.Message);
+            ShowToast($"Validation error: {ex.Message}", "error");
+        }
+    }
+
+    /// <summary>
+    /// Validates email format using Guardian
+    /// </summary>
+    /// <param name="email">Email to validate</param>
+    /// <param name="parameterName">Parameter name</param>
+    protected void ValidateEmail(string email, string parameterName = "Email")
+    {
+        try
+        {
+            Guard.Against.NullOrWhiteSpace(email, parameterName);
+            Guard.Against.InvalidFormat(email, @"^[^@\s]+@[^@\s]+\.[^@\s]+$", parameterName, "Invalid email format");
+        }
+        catch (ArgumentException ex)
+        {
+            ModelState.AddModelError(parameterName, ex.Message);
+            ShowToast("Invalid email format", "error");
+        }
+    }
+
+    /// <summary>
+    /// Validates numeric range using Guardian
+    /// </summary>
+    /// <param name="value">Numeric value</param>
+    /// <param name="min">Minimum value</param>
+    /// <param name="max">Maximum value</param>
+    /// <param name="parameterName">Parameter name</param>
+    protected void ValidateRange(decimal value, decimal min, decimal max, string parameterName)
+    {
+        try
+        {
+            Guard.Against.OutOfRange(value, parameterName, min, max);
+        }
+        catch (ArgumentOutOfRangeException ex)
+        {
+            ModelState.AddModelError(parameterName, ex.Message);
+            ShowToast($"Value must be between {min} and {max}", "error");
+        }
+    }
+
+    /// <summary>
+    /// Executes a Tuxedo query with error handling
+    /// </summary>
+    /// <typeparam name="T">Result type</typeparam>
+    /// <param name="sql">SQL query</param>
+    /// <param name="parameters">Query parameters</param>
+    /// <returns>Query results</returns>
+    protected async Task<IEnumerable<T>> ExecuteQueryAsync<T>(string sql, object? parameters = null)
+    {
+        try
+        {
+            Guard.Against.NullOrWhiteSpace(sql, nameof(sql));
+            
+            return await TuxedoContext.QueryAsync<T>(sql, parameters);
+        }
+        catch (Exception ex)
+        {
+            ShowToast("Database query failed", "error");
+            ComponentContext.TrackComponentUsage(GetType().Name, "QueryError");
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Executes a Tuxedo command with validation
+    /// </summary>
+    /// <param name="sql">SQL command</param>
+    /// <param name="parameters">Command parameters</param>
+    /// <returns>Number of affected rows</returns>
+    protected async Task<int> ExecuteCommandAsync(string sql, object? parameters = null)
+    {
+        try
+        {
+            Guard.Against.NullOrWhiteSpace(sql, nameof(sql));
+            
+            return await TuxedoContext.ExecuteAsync(sql, parameters);
+        }
+        catch (Exception ex)
+        {
+            ShowToast("Database command failed", "error");
+            ComponentContext.TrackComponentUsage(GetType().Name, "CommandError");
+            throw;
+        }
     }
 
     /// <summary>

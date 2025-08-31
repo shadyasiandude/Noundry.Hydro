@@ -11,6 +11,22 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseInMemoryDatabase("NoundryHydroDemo"));
 
+// Configure Tuxedo ORM for high-performance data access
+builder.Services.AddTuxedo(options =>
+{
+    options.ConnectionString = "Data Source=:memory:"; // In-memory for demo
+    options.DatabaseProvider = DatabaseProvider.SQLite;
+    options.EnableRetryPolicies = true;
+    options.EnableDiagnostics = builder.Environment.IsDevelopment();
+});
+
+// Configure Bowtie migration system
+builder.Services.AddBowtie(options =>
+{
+    options.MigrationsAssembly = typeof(ApplicationDbContext).Assembly;
+    options.AutoMigrate = builder.Environment.IsDevelopment();
+});
+
 // Configure Identity
 builder.Services.AddDefaultIdentity<ApplicationUser>(options =>
 {

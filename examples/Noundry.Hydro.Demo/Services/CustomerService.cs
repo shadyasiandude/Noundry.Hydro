@@ -1,6 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using Noundry.Hydro.Demo.Data;
 using Noundry.Hydro.Demo.Models;
+using Tuxedo;
+using Guardian;
 
 namespace Noundry.Hydro.Demo.Services;
 
@@ -19,11 +21,19 @@ public interface ICustomerService
 public class CustomerService : ICustomerService
 {
     private readonly ApplicationDbContext _context;
+    private readonly ITuxedoContext _tuxedoContext;
+    private readonly IGuardian _guard;
     private readonly ILogger<CustomerService> _logger;
 
-    public CustomerService(ApplicationDbContext context, ILogger<CustomerService> logger)
+    public CustomerService(
+        ApplicationDbContext context, 
+        ITuxedoContext tuxedoContext,
+        IGuardian guard,
+        ILogger<CustomerService> logger)
     {
         _context = context;
+        _tuxedoContext = tuxedoContext;
+        _guard = guard;
         _logger = logger;
     }
 
@@ -62,9 +72,23 @@ public class CustomerService : ICustomerService
     {
         try
         {
+            // Use Guardian for input validation
+            _guard.Against.Null(customer, nameof(customer));
+            _guard.Against.NullOrWhiteSpace(customer.FirstName, nameof(customer.FirstName));
+            _guard.Against.NullOrWhiteSpace(customer.LastName, nameof(customer.LastName));
+            _guard.Against.InvalidFormat(customer.Email, @"^[^@\s]+@[^@\s]+\.[^@\s]+$", 
+                nameof(customer.Email), "Invalid email format");
+
             customer.DateJoined = DateTime.UtcNow;
+
+            // Use both EF Core and Tuxedo for demonstration
             _context.Customers.Add(customer);
             await _context.SaveChangesAsync();
+
+            // Example Tuxedo usage for additional operations
+            await _tuxedoContext.ExecuteAsync(
+                "INSERT INTO CustomerAuditLog (CustomerId, Action, Timestamp) VALUES (@Id, @Action, @Timestamp)",
+                new { Id = customer.Id, Action = "Created", Timestamp = DateTime.UtcNow });
 
             _logger.LogInformation("Created new customer: {CustomerName} ({Email})", 
                 customer.FullName, customer.Email);

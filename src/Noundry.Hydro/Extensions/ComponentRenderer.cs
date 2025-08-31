@@ -182,42 +182,94 @@ public class TagHelperContextService : ITagHelperContext
 /// </summary>
 public class TuxedoHydroIntegration : ITuxedoHydroIntegration
 {
+    private readonly ITuxedoContext _tuxedoContext;
     private readonly IServiceProvider _serviceProvider;
     private readonly ILogger<TuxedoHydroIntegration> _logger;
 
-    public TuxedoHydroIntegration(IServiceProvider serviceProvider, ILogger<TuxedoHydroIntegration> logger)
+    public TuxedoHydroIntegration(
+        ITuxedoContext tuxedoContext, 
+        IServiceProvider serviceProvider, 
+        ILogger<TuxedoHydroIntegration> logger)
     {
+        _tuxedoContext = tuxedoContext;
         _serviceProvider = serviceProvider;
         _logger = logger;
     }
 
     public async Task<T?> BindQueryAsync<T>(object query)
     {
-        // Implement Tuxedo query binding
-        _logger.LogInformation("Binding Tuxedo query of type {QueryType}", query.GetType().Name);
-        
-        // This would integrate with actual Tuxedo ORM
-        await Task.Delay(1); // Simulate async operation
-        return default(T);
+        try
+        {
+            _logger.LogInformation("Executing Tuxedo query of type {QueryType}", query.GetType().Name);
+            
+            // Use Tuxedo's high-performance query capabilities
+            if (query is string sql)
+            {
+                var results = await _tuxedoContext.QueryAsync<T>(sql);
+                return results.FirstOrDefault();
+            }
+            
+            // Handle complex query objects
+            var queryBuilder = _tuxedoContext.QueryBuilder<T>();
+            // Apply query parameters from the query object
+            
+            var result = await queryBuilder.ExecuteAsync();
+            return result.FirstOrDefault();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error executing Tuxedo query");
+            throw;
+        }
     }
 
     public async Task<bool> ExecuteCommandAsync(object command)
     {
-        // Implement Tuxedo command execution
-        _logger.LogInformation("Executing Tuxedo command of type {CommandType}", command.GetType().Name);
-        
-        // This would integrate with actual Tuxedo ORM
-        await Task.Delay(1); // Simulate async operation
-        return true;
+        try
+        {
+            _logger.LogInformation("Executing Tuxedo command of type {CommandType}", command.GetType().Name);
+            
+            if (command is string sql)
+            {
+                var rowsAffected = await _tuxedoContext.ExecuteAsync(sql);
+                return rowsAffected > 0;
+            }
+            
+            // Handle command objects
+            // Implementation would depend on command type
+            return true;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error executing Tuxedo command");
+            throw;
+        }
     }
 
     public async Task<Dictionary<string, string[]>> ValidateEntityAsync<T>(T entity)
     {
-        // Implement Tuxedo entity validation
-        _logger.LogInformation("Validating entity of type {EntityType}", typeof(T).Name);
-        
-        // This would integrate with actual Tuxedo validation
-        await Task.Delay(1); // Simulate async operation
-        return new Dictionary<string, string[]>();
+        try
+        {
+            _logger.LogInformation("Validating entity of type {EntityType}", typeof(T).Name);
+            
+            var validationErrors = new Dictionary<string, string[]>();
+            
+            // Use Tuxedo's built-in validation features
+            var isValid = await _tuxedoContext.ValidateAsync(entity);
+            
+            if (!isValid)
+            {
+                // Extract validation errors from Tuxedo validation result
+                // This would be implemented based on Tuxedo's validation API
+                validationErrors.Add("Entity", new[] { "Entity validation failed" });
+            }
+            
+            return validationErrors;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error validating entity");
+            throw;
+        }
     }
 }

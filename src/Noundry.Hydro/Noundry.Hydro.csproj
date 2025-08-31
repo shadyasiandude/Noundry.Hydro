@@ -32,10 +32,16 @@
   <ItemGroup>
     <PackageReference Include="HtmlAgilityPack" Version="1.11.50" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
-    <!-- Note: Noundry ecosystem packages would be added here when available -->
-    <!-- <PackageReference Include="Noundry.TagHelpers" Version="*" /> -->
-    <!-- <PackageReference Include="Noundry.UI" Version="*" /> -->
-    <!-- <PackageReference Include="Tuxedo" Version="*" /> -->
+    
+    <!-- Noundry Ecosystem Integration -->
+    <PackageReference Include="Noundry.TagHelpers" Version="*" />
+    <PackageReference Include="Noundry.UI" Version="*" />
+    
+    <!-- Data Access and Security -->
+    <PackageReference Include="Tuxedo" Version="*" />
+    <PackageReference Include="Bowtie" Version="*" />
+    <PackageReference Include="Guardian" Version="*" />
+    <PackageReference Include="Assertive" Version="*" />
   </ItemGroup>
 
   <ItemGroup>

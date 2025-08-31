@@ -15,6 +15,14 @@
     <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="8.0.0" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="8.0.0" />
     <PackageReference Include="Bogus" Version="34.0.2" />
+    
+    <!-- Noundry Ecosystem -->
+    <PackageReference Include="Noundry.TagHelpers" Version="*" />
+    <PackageReference Include="Noundry.UI" Version="*" />
+    <PackageReference Include="Tuxedo" Version="*" />
+    <PackageReference Include="Bowtie" Version="*" />
+    <PackageReference Include="Guardian" Version="*" />
+    <PackageReference Include="Assertive" Version="*" />
   </ItemGroup>
 
   <ItemGroup>
